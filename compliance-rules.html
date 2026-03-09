@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容合规规则速查工具</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8eaf6 100%);
+            min-height: 100vh;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const {
+            createTheme,
+            ThemeProvider,
+            Container,
+            Box,
+            Typography,
+            TextField,
+            InputAdornment,
+            Tabs,
+            Tab,
+            Card,
+            CardContent,
+            Chip,
+            Grid,
+            Paper
+        } = MaterialUI;
+
+        // 创建主题
+        const theme = createTheme({
+            palette: {
+                primary: {
+                    main: '#1976d2',
+                    light: '#42a5f5',
+                },
+                secondary: {
+                    main: '#9c27b0',
+                    light: '#ba68c8',
+                },
+            },
+            typography: {
+                fontFamily: '"Noto Sans SC", "Roboto", sans-serif',
+            },
+        });
+
+        // 规则数据
+        const rulesData = {
+            '广告合规': [
+                {
+                    title: '广告内容真实性要求',
+                    content: '广告不得含有虚假或者引人误解的内容，不得欺骗、误导消费者',
+                    tags: ['真实性', '消费者权益'],
+                    interpretation: '所有广告内容必须有事实依据，不得夸大宣传效果，不得使用绝对化用语。医疗、药品、保健品等特殊商品广告需经审查。'
+                },
+                {
+                    title: '广告标识规范',
+                    content: '广告应当具有可识别性，能够使消费者辨明其为广告',
+                    tags: ['标识', '透明度'],
+                    interpretation: '广告内容必须清晰标注"广告"字样，不得以新闻报道形式发布广告。视频广告时长需明确标注，植入式广告需提前告知。'
+                }
+            ],
+            '内容审核': [
+                {
+                    title: '禁止传播违法信息',
+                    content: '不得传播违反法律法规、危害国家安全、破坏社会稳定的内容',
+                    tags: ['违法信息', '国家安全'],
+                    interpretation: '包括但不限于：暴力恐怖、淫秽色情、赌博吸毒、邪教迷信等内容。平台需建立内容审核机制，及时处理违规内容。'
+                },
+                {
+                    title: '未成年人保护要求',
+                    content: '不得传播危害未成年人身心健康的内容',
+                    tags: ['未成年人', '身心健康'],
+                    interpretation: '涉及未成年人的内容需特别注意：不得诱导不良行为、不得传播暴力血腥、不得过度暴露个人隐私。网络游戏需设置防沉迷系统。'
+                }
+            ],
+            '隐私保护': [
+                {
+                    title: '个人信息收集规范',
+                    content: '收集个人信息应当遵循合法、正当、必要的原则',
+                    tags: ['个人信息', '收集原则'],
+                    interpretation: '不得过度收集个人信息，需明确告知收集目的、方式和范围。敏感个人信息需取得单独同意，儿童个人信息需监护人同意。'
+                },
+                {
+                    title: '数据安全义务',
+                    content: '应当采取必要措施保障所处理的个人信息安全',
+                    tags: ['数据安全', '保护措施'],
+                    interpretation: '需建立数据分类分级制度、加密存储机制、访问控制体系。发生数据泄露需及时告知用户并向监管部门报告。'
+                }
+            ],
+            '版权规范': [
+                {
+                    title: '著作权保护要求',
+                    content: '不得侵犯他人的著作权，包括复制、发行、信息网络传播等行为',
+                    tags: ['著作权', '侵权'],
+                    interpretation: '未经授权不得转载、传播他人作品。短视频需注意背景音乐、字体、图片等版权问题。合理使用需符合法定条件。'
+                },
+                {
+                    title: '平台版权义务',
+                    content: '网络服务提供者应当建立版权保护机制，及时处理侵权投诉',
+                    tags: ['平台义务', '投诉处理'],
+                    interpretation: '需建立"通知-删除"机制，接到权利人通知后及时删除侵权内容。对重复侵权用户采取限制措施。保存侵权记录备查。'
+                }
+            ]
+        };
+
+        // 主应用组件
+        function App() {
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [currentTab, setCurrentTab] = React.useState(0);
+            const categories = ['广告合规', '内容审核', '隐私保护', '版权规范'];
+
+            // 搜索过滤
+            const filteredRules = React.useMemo(() => {
+                const category = categories[currentTab];
+                const rules = rulesData[category] || [];
+                
+                if (!searchQuery) return rules;
+                
+                return rules.filter(rule => 
+                    rule.title.includes(searchQuery) ||
+                    rule.content.includes(searchQuery) ||
+                    rule.interpretation.includes(searchQuery) ||
+                    rule.tags.some(tag => tag.includes(searchQuery))
+                );
+            }, [searchQuery, currentTab]);
+
+            return React.createElement(
+                ThemeProvider,
+                { theme: theme },
+                React.createElement(
+                    Box,
+                    {
+                        sx: {
+                            minHeight: '100vh',
+                            background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8eaf6 100%)',
+                            pb: 6
+                        }
+                    },
+                    // 头部
+                    React.createElement(
+                        Box,
+                        {
+                            sx: {
+                                background: 'linear-gradient(135deg, #1976d2 0%, #7b1fa2 100%)',
+                                color: 'white',
+                                py: 4,
+                                mb: 4,
+                                boxShadow: '0 4px 20px rgba(25, 118, 210, 0.3)'
+                            }
+                        },
+                        React.createElement(
+                            Container,
+                            { maxWidth: 'lg' },
+                            React.createElement(
+                                Typography,
+                                {
+                                    variant: 'h4',
+                                    component: 'h1',
+                                    sx: {
+                                        fontWeight: 700,
+                                        mb: 2,
+                                        textAlign: 'center'
+                                    }
+                                },
+                                '📋 内容合规规则速查工具'
+                            ),
+                            React.createElement(
+                                Typography,
+                                {
+                                    variant: 'body1',
+                                    sx: {
+                                        textAlign: 'center',
+                                        opacity: 0.9,
+                                        mb: 3
+                                    }
+                                },
+                                '快速查询内容审核、广告合规、隐私保护、版权规范等核心规则'
+                            ),
+                            // 搜索框
+                            React.createElement(
+                                Box,
+                                { sx: { maxWidth: 600, mx: 'auto' } },
+                                React.createElement(TextField, {
+                                    fullWidth: true,
+                                    placeholder: '搜索规则关键词...',
+                                    value: searchQuery,
+                                    onChange: (e) => setSearchQuery(e.target.value),
+                                    variant: 'outlined',
+                                    InputProps: {
+                                        startAdornment: React.createElement(
+                                            InputAdornment,
+                                            { position: 'start' },
+                                            React.createElement('span', { className: 'material-icons' }, 'search')
+                                        ),
+                                        style: {
+                                            backgroundColor: 'white',
+                                            borderRadius: '8px'
+                                        }
+                                    }
+                                })
+                            )
+                        )
+                    ),
+                    // 内容区域
+                    React.createElement(
+                        Container,
+                        { maxWidth: 'lg' },
+                        // 分类导航
+                        React.createElement(
+                            Paper,
+                            {
+                                sx: {
+                                    mb: 4,
+                                    borderRadius: 2,
+                                    overflow: 'hidden',
+                                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                                }
+                            },
+                            React.createElement(
+                                Tabs,
+                                {
+                                    value: currentTab,
+                                    onChange: (e, newValue) => setCurrentTab(newValue),
+                                    variant: 'fullWidth',
+                                    sx: {
+                                        '& .MuiTabs-indicator': {
+                                            background: 'linear-gradient(90deg, #1976d2 0%, #7b1fa2 100%)',
+                                            height: 3
+                                        }
+                                    }
+                                },
+                                categories.map((category, index) =>
+                                    React.createElement(Tab, {
+                                        key: index,
+                                        label: category,
+                                        sx: {
+                                            fontWeight: 500,
+                                            fontSize: '1rem',
+                                            py: 2
+                                        }
+                                    })
+                                )
+                            )
+                        ),
+                        // 规则卡片
+                        React.createElement(
+                            Grid,
+                            { container: true, spacing: 3 },
+                            filteredRules.map((rule, index) =>
+                                React.createElement(
+                                    Grid,
+                                    { item: true, xs: 12, md: 6, key: index },
+                                    React.createElement(
+                                        Card,
+                                        {
+                                            sx: {
+                                                height: '100%',
+                                                borderRadius: 2,
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                                                '&:hover': {
+                                                    transform: 'translateY(-4px)',
+                                                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)'
+                                                }
+                                            }
+                                        },
+                                        React.createElement(
+                                            CardContent,
+                                            { sx: { p: 3 } },
+                                            React.createElement(
+                                                Typography,
+                                                {
+                                                    variant: 'h6',
+                                                    sx: {
+                                                        fontWeight: 600,
+                                                        mb: 2,
+                                                        color: '#1976d2'
+                                                    }
+                                                },
+                                                rule.title
+                                            ),
+                                            React.createElement(
+                                                Typography,
+                                                {
+                                                    variant: 'body2',
+                                                    sx: {
+                                                        mb: 2,
+                                                        lineHeight: 1.6,
+                                                        color: '#424242'
+                                                    }
+                                                },
+                                                rule.content
+                                            ),
+                                            React.createElement(
+                                                Box,
+                                                { sx: { mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' } },
+                                                rule.tags.map((tag, tagIndex) =>
+                                                    React.createElement(Chip, {
+                                                        key: tagIndex,
+                                                        label: tag,
+                                                        size: 'small',
+                                                        sx: {
+                                                            background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                                                            color: '#1976d2',
+                                                            fontWeight: 500
+                                                        }
+                                                    })
+                                                )
+                                            ),
+                                            React.createElement(
+                                                Box,
+                                                {
+                                                    sx: {
+                                                        p: 2,
+                                                        bgcolor: '#f5f5f5',
+                                                        borderRadius: 1,
+                                                        borderLeft: '3px solid #9c27b0'
+                                                    }
+                                                },
+                                                React.createElement(
+                                                    Typography,
+                                                    {
+                                                        variant: 'caption',
+                                                        sx: {
+                                                            fontWeight: 600,
+                                                            color: '#9c27b0',
+                                                            display: 'block',
+                                                            mb: 0.5
+                                                        }
+                                                    },
+                                                    '💡 简单解读'
+                                                ),
+                                                React.createElement(
+                                                    Typography,
+                                                    {
+                                                        variant: 'body2',
+                                                        sx: {
+                                                            color: '#616161',
+                                                            lineHeight: 1.6
+                                                        }
+                                                    },
+                                                    rule.interpretation
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        // 无结果提示
+                        filteredRules.length === 0 && React.createElement(
+                            Box,
+                            {
+                                sx: {
+                                    textAlign: 'center',
+                                    py: 8,
+                                    color: '#9e9e9e'
+                                }
+                            },
+                            React.createElement('span', {
+                                className: 'material-icons',
+                                style: { fontSize: 64, opacity: 0.5 }
+                            }, 'search_off'),
+                            React.createElement(
+                                Typography,
+                                { variant: 'h6', sx: { mt: 2 } },
+                                '未找到相关规则'
+                            ),
+                            React.createElement(
+                                Typography,
+                                { variant: 'body2' },
+                                '请尝试其他关键词'
+                            )
+                        ),
+                        // 合规自查建议模块
+                        React.createElement(
+                            Paper,
+                            {
+                                sx: {
+                                    mt: 4,
+                                    p: 4,
+                                    borderRadius: 2,
+                                    background: 'linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%)',
+                                    boxShadow: '0 2px 12px rgba(156, 39, 176, 0.1)',
+                                    border: '1px solid rgba(156, 39, 176, 0.1)'
+                                }
+                            },
+                            React.createElement(
+                                Typography,
+                                {
+                                    variant: 'h5',
+                                    sx: {
+                                        fontWeight: 600,
+                                        mb: 3,
+                                        color: '#9c27b0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1
+                                    }
+                                },
+                                React.createElement('span', { className: 'material-icons' }, 'fact_check'),
+                                '合规自查建议'
+                            ),
+                            React.createElement(
+                                Box,
+                                { sx: { display: 'flex', flexDirection: 'column', gap: 2 } },
+                                [
+                                    {
+                                        icon: 'search',
+                                        title: '1. 对照规则梳理业务场景',
+                                        desc: '全面审视现有业务流程，识别可能涉及合规风险的环节，建立业务场景清单'
+                                    },
+                                    {
+                                        icon: 'warning',
+                                        title: '2. 标记高风险违规点',
+                                        desc: '根据规则要求，对识别出的业务场景进行风险评级，重点标注高风险项'
+                                    },
+                                    {
+                                        icon: 'assignment',
+                                        title: '3. 制定整改方案',
+                                        desc: '针对高风险违规点制定具体的整改措施，明确责任人和完成时限'
+                                    }
+                                ].map((item, index) =>
+                                    React.createElement(
+                                        Box,
+                                        {
+                                            key: index,
+                                            sx: {
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: 2,
+                                                p: 2,
+                                                bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                                borderRadius: 1,
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                                    transform: 'translateX(4px)'
+                                                }
+                                            }
+                                        },
+                                        React.createElement(
+                                            Box,
+                                            {
+                                                sx: {
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: '50%',
+                                                    bgcolor: '#9c27b0',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }
+                                            },
+                                            React.createElement('span', {
+                                                className: 'material-icons',
+                                                style: { color: 'white', fontSize: 20 }
+                                            }, item.icon)
+                                        ),
+                                        React.createElement(
+                                            Box,
+                                            { sx: { flex: 1 } },
+                                            React.createElement(
+                                                Typography,
+                                                {
+                                                    variant: 'subtitle1',
+                                                    sx: {
+                                                        fontWeight: 600,
+                                                        color: '#6a1b9a',
+                                                        mb: 0.5
+                                                    }
+                                                },
+                                                item.title
+                                            ),
+                                            React.createElement(
+                                                Typography,
+                                                {
+                                                    variant: 'body2',
+                                                    sx: {
+                                                        color: '#616161',
+                                                        lineHeight: 1.6
+                                                    }
+                                                },
+                                                item.desc
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        }
+
+        // 渲染应用
+        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+    </script>
+</body>
+</html>
