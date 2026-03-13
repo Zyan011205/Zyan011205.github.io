@@ -1,407 +1,1225 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>内容合规规则速查工具</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据跨境合规风险地图</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --bg-elevated: #0f172a;
+      --border-subtle: #1f2937;
+      --text-primary: #e5e7eb;
+      --text-secondary: #9ca3af;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --danger: #ef4444;
+      --warning: #f97316;
+      --success: #22c55e;
+    }
 
-        body {
-            font-family: 'Noto Sans SC', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8eaf6 100%);
-            min-height: 100vh;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        #root {
-            min-height: 100vh;
-        }
-    </style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .app-shell {
+      flex: 1;
+      max-width: 1280px;
+      margin: 16px;
+      padding: 20px 20px 16px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.08), transparent 55%),
+                  radial-gradient(circle at top right, rgba(239,68,68,0.08), transparent 55%),
+                  linear-gradient(135deg, #020617, #020617 40%, #020617 100%);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow:
+        0 22px 45px rgba(15,23,42,0.85),
+        0 0 0 1px rgba(15,23,42,0.4),
+        0 0 80px rgba(56,189,248,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .app-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #38bdf8, transparent 60%),
+                  radial-gradient(circle at 70% 70%, #22c55e, transparent 60%),
+                  #020617;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(56,189,248,0.55);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title-badge::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 10%, rgba(248,250,252,0.35), transparent 55%);
+      mix-blend-mode: screen;
+      opacity: 0.8;
+    }
+
+    .title-badge-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(226,232,240,0.8);
+      box-shadow:
+        0 0 0 1px rgba(148,163,184,0.6),
+        0 0 12px rgba(59,130,246,0.95);
+    }
+
+    .title-text h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .title-text p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(15,23,42,0.7);
+    }
+
+    .risk-legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .risk-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(31,41,55,0.9);
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .risk-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .dot-high {
+      background: radial-gradient(circle at 30% 30%, #fecaca, #ef4444);
+    }
+
+    .dot-medium {
+      background: radial-gradient(circle at 30% 30%, #fed7aa, #f97316);
+    }
+
+    .dot-low {
+      background: radial-gradient(circle at 30% 30%, #bbf7d0, #22c55e);
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1 1 220px;
+      max-width: 360px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 34px 8px 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .search-input::placeholder {
+      color: #6b7280;
+    }
+
+    .search-input:focus {
+      border-color: rgba(56,189,248,0.85);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.4);
+      background: rgba(15,23,42,1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    .search-kbd {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      padding: 1px 5px 2px;
+      border-radius: 4px;
+      border: 1px solid rgba(148,163,184,0.7);
+      color: #9ca3af;
+      background: rgba(15,23,42,0.95);
+    }
+
+    .search-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .main-layout {
+      display: flex;
+      flex: 1;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .map-card {
+      flex: 2.1;
+      min-width: 0;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, rgba(30,64,175,0.4), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(16,185,129,0.25), transparent 55%),
+                  rgba(15,23,42,0.98);
+      border: 1px solid rgba(30,64,175,0.85);
+      box-shadow:
+        0 18px 35px rgba(15,23,42,0.9),
+        0 0 0 1px rgba(15,23,42,0.8),
+        0 0 40px rgba(56,189,248,0.25);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .map-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .map-card-header span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .map-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(59,130,246,0.8);
+      background: rgba(15,23,42,0.85);
+      color: #bfdbfe;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .map-container {
+      position: relative;
+      flex: 1;
+      min-height: 320px;
+    }
+
+    #riskMap {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-glow {
+      position: absolute;
+      inset: 12% 18% auto 18%;
+      border-radius: 999px;
+      background: radial-gradient(circle at center, rgba(56,189,248,0.3), transparent 70%);
+      opacity: 0.65;
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .details-card {
+      flex: 1.2;
+      min-width: 260px;
+      max-width: 360px;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.14), transparent 55%),
+                  rgba(15,23,42,0.98);
+      border: 1px solid rgba(75,85,99,0.9);
+      box-shadow:
+        0 14px 30px rgba(15,23,42,0.9),
+        0 0 0 1px rgba(15,23,42,0.8);
+      padding: 12px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .details-country {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .details-country-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .details-country-en {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .details-risk-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: rgba(15,23,42,0.95);
+      color: var(--text-secondary);
+    }
+
+    .details-risk-tag {
+      font-weight: 500;
+    }
+
+    .details-body {
+      flex: 1;
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .section {
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(15,23,42,0.96);
+      border: 1px solid rgba(31,41,55,0.95);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.7);
+    }
+
+    .section-content {
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+
+    .section-content ul {
+      padding-left: 16px;
+      margin: 0;
+    }
+
+    .section-content li {
+      margin-bottom: 2px;
+    }
+
+    .section-content .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      font-size: 10px;
+      color: #d1d5db;
+      margin-right: 4px;
+      margin-bottom: 3px;
+      background: rgba(15,23,42,0.96);
+    }
+
+    .section-content .tag-strong {
+      border-color: rgba(248,113,113,0.9);
+      color: #fecaca;
+    }
+
+    .section-content .tag-soft {
+      border-color: rgba(56,189,248,0.7);
+      color: #bae6fd;
+    }
+
+    .section-content .tag-local {
+      border-color: rgba(34,197,94,0.8);
+      color: #bbf7d0;
+    }
+
+    .section-body-scroll {
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .section-body-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .section-body-scroll::-webkit-scrollbar-thumb {
+      background: rgba(75,85,99,0.8);
+      border-radius: 999px;
+    }
+
+    .footer-hint {
+      font-size: 10px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        margin: 8px;
+        padding: 14px 12px 10px;
+      }
+
+      .main-layout {
+        flex-direction: column;
+      }
+
+      .details-card {
+        order: 2;
+        max-width: none;
+      }
+
+      .map-card {
+        order: 1;
+        min-height: 260px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .title-text h1 {
+        font-size: 17px;
+      }
+
+      .search-wrapper {
+        max-width: none;
+      }
+
+      .map-container {
+        min-height: 240px;
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 </head>
 <body>
-    <div id="root"></div>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="title-row">
+        <div class="title-main">
+          <div class="title-badge">
+            <div class="title-badge-dot"></div>
+          </div>
+          <div class="title-text">
+            <h1>数据跨境合规风险地图</h1>
+            <p>
+              针对重点国家/地区的数据出境合规风险一览
+              <span class="pill">点击地图或搜索国家查看详情</span>
+            </p>
+          </div>
+        </div>
+        <div class="risk-legend">
+          风险等级：
+          <span class="risk-chip"><span class="risk-dot dot-high"></span>高风险</span>
+          <span class="risk-chip"><span class="risk-dot dot-medium"></span>中风险</span>
+          <span class="risk-chip"><span class="risk-dot dot-low"></span>低风险</span>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrapper">
+          <span class="search-icon">⌕</span>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="text"
+            placeholder="搜索国家（中文/英文，如：中国 / China / EU）"
+          />
+          <span class="search-kbd">Enter</span>
+        </div>
+        <div class="search-hint">已配置 10 个重点国家/地区的数据跨境规则</div>
+      </div>
+    </header>
 
-    <script>
-        const {
-            createTheme,
-            ThemeProvider,
-            Container,
-            Box,
-            Typography,
-            TextField,
-            InputAdornment,
-            Tabs,
-            Tab,
-            Card,
-            CardContent,
-            Chip,
-            Grid,
-            Paper
-        } = MaterialUI;
+    <main class="main-layout">
+      <section class="map-card">
+        <div class="map-card-header">
+          <span>
+            地图视图
+            <span style="opacity:0.8;">· 点击国家高亮并在右侧查看详情</span>
+          </span>
+          <span class="map-badge">WORLD · RISK VIEW</span>
+        </div>
+        <div class="map-container">
+          <div id="riskMap"></div>
+          <div class="map-glow"></div>
+        </div>
+      </section>
 
-        // 创建主题
-        const theme = createTheme({
-            palette: {
-                primary: {
-                    main: '#1976d2',
-                    light: '#42a5f5',
-                },
-                secondary: {
-                    main: '#9c27b0',
-                    light: '#ba68c8',
-                },
-            },
-            typography: {
-                fontFamily: '"Noto Sans SC", "Roboto", sans-serif',
-            },
-        });
+      <aside class="details-card">
+        <div class="details-header">
+          <div class="details-country">
+            <div class="details-country-name" id="countryName"></div>
+            <div class="details-country-en" id="countryNameEn"></div>
+          </div>
+          <div class="details-risk-pill">
+            <span id="riskLevelTag" class="details-risk-tag"></span>
+            <span id="riskSummary"></span>
+          </div>
+        </div>
 
-        // 规则数据
-        const rulesData = {
-            '广告合规': [
-                {
-                    title: '广告内容真实性要求',
-                    content: '广告不得含有虚假或者引人误解的内容，不得欺骗、误导消费者',
-                    tags: ['真实性', '消费者权益'],
-                    interpretation: '所有广告内容必须有事实依据，不得夸大宣传效果，不得使用绝对化用语。医疗、药品、保健品等特殊商品广告需经审查。'
-                },
-                {
-                    title: '广告标识规范',
-                    content: '广告应当具有可识别性，能够使消费者辨明其为广告',
-                    tags: ['标识', '透明度'],
-                    interpretation: '广告内容必须清晰标注"广告"字样，不得以新闻报道形式发布广告。视频广告时长需明确标注，植入式广告需提前告知。'
-                }
-            ],
-            '内容审核': [
-                {
-                    title: '禁止传播违法信息',
-                    content: '不得传播违反法律法规、危害国家安全、破坏社会稳定的内容',
-                    tags: ['违法信息', '国家安全'],
-                    interpretation: '包括但不限于：暴力恐怖、淫秽色情、赌博吸毒、邪教迷信等内容。平台需建立内容审核机制，及时处理违规内容。'
-                },
-                {
-                    title: '未成年人保护要求',
-                    content: '不得传播危害未成年人身心健康的内容',
-                    tags: ['未成年人', '身心健康'],
-                    interpretation: '涉及未成年人的内容需特别注意：不得诱导不良行为、不得传播暴力血腥、不得过度暴露个人隐私。网络游戏需设置防沉迷系统。'
-                }
-            ],
-            '隐私保护': [
-                {
-                    title: '个人信息收集规范',
-                    content: '收集个人信息应当遵循合法、正当、必要的原则',
-                    tags: ['个人信息', '收集原则'],
-                    interpretation: '不得过度收集个人信息，需明确告知收集目的、方式和范围。敏感个人信息需取得单独同意，儿童个人信息需监护人同意。'
-                },
-                {
-                    title: '数据安全义务',
-                    content: '应当采取必要措施保障所处理的个人信息安全',
-                    tags: ['数据安全', '保护措施'],
-                    interpretation: '需建立数据分类分级制度、加密存储机制、访问控制体系。发生数据泄露需及时告知用户并向监管部门报告。'
-                }
-            ],
-            '版权规范': [
-                {
-                    title: '著作权保护要求',
-                    content: '不得侵犯他人的著作权，包括复制、发行、信息网络传播等行为',
-                    tags: ['著作权', '侵权'],
-                    interpretation: '未经授权不得转载、传播他人作品。短视频需注意背景音乐、字体、图片等版权问题。合理使用需符合法定条件。'
-                },
-                {
-                    title: '平台版权义务',
-                    content: '网络服务提供者应当建立版权保护机制，及时处理侵权投诉',
-                    tags: ['平台义务', '投诉处理'],
-                    interpretation: '需建立"通知-删除"机制，接到权利人通知后及时删除侵权内容。对重复侵权用户采取限制措施。保存侵权记录备查。'
-                }
-            ]
-        };
+        <div class="details-body">
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-dot"></span>
+                法规框架
+              </div>
+              <span id="regulationUpdate" style="font-size:10px;color:#6b7280;"></span>
+            </div>
+            <div class="section-content section-body-scroll" id="regulations"></div>
+          </div>
 
-        // 主应用组件
-        function App() {
-            const [searchQuery, setSearchQuery] = React.useState('');
-            const [currentTab, setCurrentTab] = React.useState(0);
-            const categories = ['广告合规', '内容审核', '隐私保护', '版权规范'];
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-dot"></span>
+                传输机制 / 合法基础
+              </div>
+            </div>
+            <div class="section-content section-body-scroll" id="transferMechanism"></div>
+          </div>
 
-            // 搜索过滤
-            const filteredRules = React.useMemo(() => {
-                const category = categories[currentTab];
-                const rules = rulesData[category] || [];
-                
-                if (!searchQuery) return rules;
-                
-                return rules.filter(rule => 
-                    rule.title.includes(searchQuery) ||
-                    rule.content.includes(searchQuery) ||
-                    rule.interpretation.includes(searchQuery) ||
-                    rule.tags.some(tag => tag.includes(searchQuery))
-                );
-            }, [searchQuery, currentTab]);
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-dot"></span>
+                数据本地化 / 存储要求
+              </div>
+            </div>
+            <div class="section-content section-body-scroll" id="localization"></div>
+          </div>
 
-            return React.createElement(
-                ThemeProvider,
-                { theme: theme },
-                React.createElement(
-                    Box,
-                    {
-                        sx: {
-                            minHeight: '100vh',
-                            background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8eaf6 100%)',
-                            pb: 6
-                        }
-                    },
-                    // 头部
-                    React.createElement(
-                        Box,
-                        {
-                            sx: {
-                                background: 'linear-gradient(135deg, #1976d2 0%, #7b1fa2 100%)',
-                                color: 'white',
-                                py: 4,
-                                mb: 4,
-                                boxShadow: '0 4px 20px rgba(25, 118, 210, 0.3)'
-                            }
-                        },
-                        React.createElement(
-                            Container,
-                            { maxWidth: 'lg' },
-                            React.createElement(
-                                Typography,
-                                {
-                                    variant: 'h4',
-                                    component: 'h1',
-                                    sx: {
-                                        fontWeight: 700,
-                                        mb: 2,
-                                        textAlign: 'center'
-                                    }
-                                },
-                                '📋 内容合规规则速查工具'
-                            ),
-                            React.createElement(
-                                Typography,
-                                {
-                                    variant: 'body1',
-                                    sx: {
-                                        textAlign: 'center',
-                                        opacity: 0.9,
-                                        mb: 3
-                                    }
-                                },
-                                '快速查询内容审核、广告合规、隐私保护、版权规范等核心规则'
-                            ),
-                            // 搜索框
-                            React.createElement(
-                                Box,
-                                { sx: { maxWidth: 600, mx: 'auto' } },
-                                React.createElement(TextField, {
-                                    fullWidth: true,
-                                    placeholder: '搜索规则关键词...',
-                                    value: searchQuery,
-                                    onChange: (e) => setSearchQuery(e.target.value),
-                                    variant: 'outlined',
-                                    InputProps: {
-                                        startAdornment: React.createElement(
-                                            InputAdornment,
-                                            { position: 'start' },
-                                            React.createElement('span', { className: 'material-icons' }, 'search')
-                                        ),
-                                        style: {
-                                            backgroundColor: 'white',
-                                            borderRadius: '8px'
-                                        }
-                                    }
-                                })
-                            )
-                        )
-                    ),
-                    // 内容区域
-                    React.createElement(
-                        Container,
-                        { maxWidth: 'lg' },
-                        // 分类导航
-                        React.createElement(
-                            Paper,
-                            {
-                                sx: {
-                                    mb: 4,
-                                    borderRadius: 2,
-                                    overflow: 'hidden',
-                                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
-                                }
-                            },
-                            React.createElement(
-                                Tabs,
-                                {
-                                    value: currentTab,
-                                    onChange: (e, newValue) => setCurrentTab(newValue),
-                                    variant: 'fullWidth',
-                                    sx: {
-                                        '& .MuiTabs-indicator': {
-                                            background: 'linear-gradient(90deg, #1976d2 0%, #7b1fa2 100%)',
-                                            height: 3
-                                        }
-                                    }
-                                },
-                                categories.map((category, index) =>
-                                    React.createElement(Tab, {
-                                        key: index,
-                                        label: category,
-                                        sx: {
-                                            fontWeight: 500,
-                                            fontSize: '1rem',
-                                            py: 2
-                                        }
-                                    })
-                                )
-                            )
-                        ),
-                        // 规则卡片
-                        React.createElement(
-                            Grid,
-                            { container: true, spacing: 3 },
-                            filteredRules.map((rule, index) =>
-                                React.createElement(
-                                    Grid,
-                                    { item: true, xs: 12, md: 6, key: index },
-                                    React.createElement(
-                                        Card,
-                                        {
-                                            sx: {
-                                                height: '100%',
-                                                borderRadius: 2,
-                                                transition: 'all 0.3s ease',
-                                                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-                                                '&:hover': {
-                                                    transform: 'translateY(-4px)',
-                                                    boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)'
-                                                }
-                                            }
-                                        },
-                                        React.createElement(
-                                            CardContent,
-                                            { sx: { p: 3 } },
-                                            React.createElement(
-                                                Typography,
-                                                {
-                                                    variant: 'h6',
-                                                    sx: {
-                                                        fontWeight: 600,
-                                                        mb: 2,
-                                                        color: '#1976d2'
-                                                    }
-                                                },
-                                                rule.title
-                                            ),
-                                            React.createElement(
-                                                Typography,
-                                                {
-                                                    variant: 'body2',
-                                                    sx: {
-                                                        mb: 2,
-                                                        lineHeight: 1.6,
-                                                        color: '#424242'
-                                                    }
-                                                },
-                                                rule.content
-                                            ),
-                                            React.createElement(
-                                                Box,
-                                                { sx: { mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' } },
-                                                rule.tags.map((tag, tagIndex) =>
-                                                    React.createElement(Chip, {
-                                                        key: tagIndex,
-                                                        label: tag,
-                                                        size: 'small',
-                                                        sx: {
-                                                            background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-                                                            color: '#1976d2',
-                                                            fontWeight: 500
-                                                        }
-                                                    })
-                                                )
-                                            ),
-                                            React.createElement(
-                                                Box,
-                                                {
-                                                    sx: {
-                                                        p: 2,
-                                                        bgcolor: '#f5f5f5',
-                                                        borderRadius: 1,
-                                                        borderLeft: '3px solid #9c27b0'
-                                                    }
-                                                },
-                                                React.createElement(
-                                                    Typography,
-                                                    {
-                                                        variant: 'caption',
-                                                        sx: {
-                                                            fontWeight: 600,
-                                                            color: '#9c27b0',
-                                                            display: 'block',
-                                                            mb: 0.5
-                                                        }
-                                                    },
-                                                    '💡 简单解读'
-                                                ),
-                                                React.createElement(
-                                                    Typography,
-                                                    {
-                                                        variant: 'body2',
-                                                        sx: {
-                                                            color: '#616161',
-                                                            lineHeight: 1.6
-                                                        }
-                                                    },
-                                                    rule.interpretation
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        ),
-                        // 无结果提示
-                        filteredRules.length === 0 && React.createElement(
-                            Box,
-                            {
-                                sx: {
-                                    textAlign: 'center',
-                                    py: 8,
-                                    color: '#9e9e9e'
-                                }
-                            },
-                            React.createElement('span', {
-                                className: 'material-icons',
-                                style: { fontSize: 64, opacity: 0.5 }
-                            }, 'search_off'),
-                            React.createElement(
-                                Typography,
-                                { variant: 'h6', sx: { mt: 2 } },
-                                '未找到相关规则'
-                            ),
-                            React.createElement(
-                                Typography,
-                                { variant: 'body2' },
-                                '请尝试其他关键词'
-                            )
-                        )
-                    )
-                )
-            );
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-dot"></span>
+                典型执法案例 / 风险提示
+              </div>
+            </div>
+            <div class="section-content section-body-scroll" id="enforcement"></div>
+          </div>
+        </div>
+
+        <div class="footer-hint">
+          内容为基于公开资料的合规参考，具体项目请结合最新法规与专业法律意见。
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    // 数据来源为公开法规与监管信息的高度概括，仅供合规参考而非法律意见
+    var countryConfig = {
+      China: {
+        code: "CN",
+        zhName: "中国",
+        enName: "China",
+        mapName: "China",
+        aliases: ["中国", "CN", "PRC", "People's Republic of China"],
+        riskLevel: "高风险",
+        riskScore: 3,
+        riskSummary: "数据出境监管严格，合规门槛高",
+        regulationUpdate: "关键法规：个保法、网安法、数据安全法及配套规则",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">个人信息保护法（PIPL）</span><span class="tag tag-strong">网络安全法</span><span class="tag tag-strong">数据安全法</span></div>' +
+          "<ul>" +
+          "<li>跨境提供个人信息须符合 PIPL 第三章第三节要求。</li>" +
+          "<li>关键信息基础设施运营者、处理达到数量阈值的个人信息处理者需进行安全评估。</li>" +
+          "<li>数据分类分级、重要数据识别与跨境规则由行业主管部门细化。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">安全评估</span><span class="tag tag-soft">标准合同（SCC-China）</span><span class="tag tag-soft">个人信息保护认证</span></div>' +
+          "<ul>" +
+          "<li>达到阈值或涉及重要数据时须向网信部门申请数据出境安全评估。</li>" +
+          "<li>未触发评估的，可通过与境外接收方签署中国版标准合同，或通过认证路径实现合规。</li>" +
+          "<li>需履行个人信息影响评估、告知同意及合同约束等义务。</li>" +
+          "</ul>",
+        localizationHtml:
+          '<div><span class="tag tag-local">关基本地存储</span><span class="tag tag-local">重要数据原则上境内存储</span></div>' +
+          "<ul>" +
+          "<li>关键信息基础设施运营者收集产生的个人信息和重要数据应在境内存储，确需出境的须评估。</li>" +
+          "<li>重要数据需按照国家规定开展本地化存储与出境安全评估。</li>" +
+          "<li>云服务和跨境远程访问方案通常被视为数据出境情形。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>网信部门及多部委联合开展“清朗”“网安”专项行动，对违法出境、越权处理等行为实施高额罚款与整治。</li>" +
+          "<li>重点行业（金融、运营商、互联网平台）数据跨境项目普遍需要前置合规论证。</li>" +
+          "<li>建议对数据出境场景进行 DPIA、建立目录台账，并预留审计与监管抽查证据。</li>" +
+          "</ul>",
+      },
+      "United States": {
+        code: "US",
+        zhName: "美国",
+        enName: "United States",
+        mapName: "United States of America",
+        aliases: ["美国", "US", "USA"],
+        riskLevel: "中风险",
+        riskScore: 2,
+        riskSummary: "联邦层面分散监管，对安全与政府访问敏感",
+        regulationUpdate: "关键：州法（CCPA/CPRA 等）、部门监管与 CLOUD Act",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">CCPA/CPRA（加州）</span><span class="tag tag-strong">州级隐私法（VA/CO/CT 等）</span><span class="tag">HIPAA / GLBA / COPPA</span></div>' +
+          "<ul>" +
+          "<li>缺乏统一的联邦综合隐私法，以行业法与州法为主。</li>" +
+          "<li>加州隐私法规对“出售”与跨境共享有较严格的告知、退出和合同要求。</li>" +
+          "<li>政府访问（FISA 702、CLOUD Act）被其他法域视为跨境传输时的风险点。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">合同条款 / DPA</span><span class="tag tag-soft">技术措施（加密、分片）</span></div>' +
+          "<ul>" +
+          "<li>重点关注与美国服务提供商签署的数据处理协议（DPA）、安全附件及子处理方约束。</li>" +
+          "<li>对来自欧盟等地区的数据，应结合 EU–US Data Privacy Framework 或 SCC+补充保障。</li>" +
+          "<li>实际实践中广泛依赖技术措施（端到端加密、密钥托管在境内等）降低政府访问风险。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>联邦层面通常不强制数据本地化，但行业监管（金融、医疗）可能对存储与访问位置有要求。</li>" +
+          "<li>部分跨境项目从其他高要求法域视角，会采用“美国数据分区”或隔离环境方案。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>FTC、州总检察长依托“不公平/欺骗性行为”框架频繁对隐私与安全事件执法。</li>" +
+          "<li>加州隐私局（CPPA）和多州联合诉讼对大型互联网平台采取高额和解和结构性整改要求。</li>" +
+          "<li>EU 与 US 在政府访问问题上的司法争议（如 Schrems 系列案件）持续影响跨境评估。</li>" +
+          "</ul>",
+      },
+      "European Union": {
+        code: "EU",
+        zhName: "欧盟",
+        enName: "European Union",
+        mapName: "European Union",
+        aliases: ["欧盟", "EU", "European Union", "EU27", "欧盟地区"],
+        riskLevel: "高风险",
+        riskScore: 3,
+        riskSummary: "GDPR 下跨境传输规则复杂，执法力度高",
+        regulationUpdate: "关键：GDPR 第三章、第四章及跨境传输章节",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">GDPR</span><span class="tag">ePrivacy 指令（及未来条例）</span></div>' +
+          "<ul>" +
+          "<li>个人数据向第三国或国际组织传输须满足充分性决定或适当保障等条件。</li>" +
+          "<li>处理活动涉及大规模监控、敏感数据或跨境场景时，通常需要进行 DPIA。</li>" +
+          "<li>各成员国还可能有特定领域性补充（如雇佣数据、健康数据）。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">充分性决定</span><span class="tag tag-soft">标准合同条款（SCC）</span><span class="tag tag-soft">绑定公司规则（BCR）</span></div>' +
+          "<ul>" +
+          "<li>优先评估接收国是否存在欧盟委员会充分性决定（如日本、韩国等）。</li>" +
+          "<li>无充分性决定时，常用 SCC 或 BCR，并需补充技术与组织措施（EDPB 口径）。</li>" +
+          "<li>少数例外情形可基于数据主体明示同意或必要性（但不宜作为常规路径）。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>GDPR 通常不直接要求本地化，但通过跨境传输门槛与监管压力形成“事实本地化”。</li>" +
+          "<li>部分成员国法律对特定数据（如税务、健康）可能间接推动在欧盟境内或合规云环境存储。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>多个大型互联网企业在跨境传输安排不足、政府访问风险控制不到位等方面遭遇数亿欧元级罚款。</li>" +
+          "<li>监管机构越来越关注远程访问、云托管和集中日志等“隐性传输”形式。</li>" +
+          "<li>建议对向第三国的每一种传输路径建立记录，并定期更新 TIA 与技术措施评估。</li>" +
+          "</ul>",
+      },
+      "United Kingdom": {
+        code: "UK",
+        zhName: "英国",
+        enName: "United Kingdom",
+        mapName: "United Kingdom",
+        aliases: ["英国", "UK", "United Kingdom", "U.K.", "Great Britain"],
+        riskLevel: "中风险",
+        riskScore: 2,
+        riskSummary: "沿袭 GDPR 体系，跨境规则清晰但持续调整",
+        regulationUpdate: "关键：UK GDPR + Data Protection Act 2018",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">UK GDPR</span><span class="tag">Data Protection Act 2018</span></div>' +
+          "<ul>" +
+          "<li>脱欧后建立独立的 UK GDPR 体系，但仍高度对齐欧盟 GDPR。</li>" +
+          "<li>对向欧盟、受充分性决定国家的传输较为便利，但对第三国同样要求适当保障。</li>" +
+          "<li>ICO 发布多份跨境传输与国际数据传输工具（IDTA、Addendum）指引。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">IDTA / Addendum</span><span class="tag tag-soft">充分性决定</span></div>' +
+          "<ul>" +
+          "<li>对非充分性国家传输时，可使用英国版 IDTA 或附加条款配合欧盟 SCC 使用。</li>" +
+          "<li>同样需要进行传输风险评估（TRA），关注政府访问与权利救济问题。</li>" +
+          "<li>与欧盟之间存在互认充分性，当前对 UK→EU / EU→UK 传输相对稳定。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>无普遍数据本地化义务，但公共部门或关键基础设施可能有额外存储要求。</li>" +
+          "<li>在与其他高要求法域并行部署时，通常采用“英欧数据区”架构统一管理。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>ICO 对多起数据安全与跨境安排不足案件处以罚款，并发布整改要求。</li>" +
+          "<li>监管关注点包括供应链管理、云服务选择与子处理方透明度。</li>" +
+          "</ul>",
+      },
+      Vietnam: {
+        code: "VN",
+        zhName: "越南",
+        enName: "Vietnam",
+        mapName: "Vietnam",
+        aliases: ["越南", "VN", "Socialist Republic of Viet Nam"],
+        riskLevel: "高风险",
+        riskScore: 3,
+        riskSummary: "网络安全法规下的数据本地化与出境审批较为严格",
+        regulationUpdate: "关键：网络安全法及数据保护相关法令",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">Cybersecurity Law</span><span class="tag">Decree 53/2022</span><span class="tag">Decree 13/2023 on PDP</span></div>' +
+          "<ul>" +
+          "<li>对在越南提供服务的境外企业可能要求在本地设立代表机构并本地化存储数据。</li>" +
+          "<li>部分数据出境需经过公安部等机关的审批或履行备案程序。</li>" +
+          "<li>个人数据保护法令对敏感个人数据、跨境转移提出额外要求。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">审批 / 备案</span><span class="tag tag-soft">合同与技术控制</span></div>' +
+          "<ul>" +
+          "<li>跨境传输往往需要提交影响评估和安全方案，接受主管机关审查。</li>" +
+          "<li>推荐在架构上尽量减少越南数据跨境，或采用虚拟本地化与分区部署。</li>" +
+          "</ul>",
+        localizationHtml:
+          '<div><span class="tag tag-local">强本地化倾向</span></div>' +
+          "<ul>" +
+          "<li>特定类型数据（如用户数据、日志）要求在越南境内存储一定期限。</li>" +
+          "<li>对电信、互联网及数字平台服务提供者的数据存放位置有严格规定。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>监管机构对跨境云和跨境平台服务的检查趋严，不符合本地化与审批要求存在业务中断风险。</li>" +
+          "<li>建议对在越南落地的业务单独进行架构与合规评估，保守设计跨境流程。</li>" +
+          "</ul>",
+      },
+      Japan: {
+        code: "JP",
+        zhName: "日本",
+        enName: "Japan",
+        mapName: "Japan",
+        aliases: ["日本", "JP", "Japan"],
+        riskLevel: "中风险",
+        riskScore: 2,
+        riskSummary: "制度成熟，获 EU 充分性，但有独立要求",
+        regulationUpdate: "关键：APPI 及其跨境转移规则",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">APPI（个人信息保护法）</span></div>' +
+          "<ul>" +
+          "<li>对向海外第三方提供个人数据要求事前告知和获得同意，或满足充分保证条件。</li>" +
+          "<li>对数据泄露、越权使用等也有报告与通知义务。</li>" +
+          "<li>与欧盟互认充分性，便于 EU–JP 数据流动，但双方仍有补充条款。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">合同保证</span><span class="tag tag-soft">充分性基础</span></div>' +
+          "<ul>" +
+          "<li>通过合同、内部规程和技术安全措施确保接收方具备与 APPI 同等保护水平。</li>" +
+          "<li>对涉及来自欧盟的数据，应同时满足 GDPR 与 APPI 要求。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>一般不强制数据本地化，但行业法规可能对特定数据类型提出约束。</li>" +
+          "<li>为与其他地区合规要求兼容，实务中常采用区域数据中心与访问控制策略。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>日本个人信息保护委员会（PPC）持续发布跨境指引并开展调查与行政处分。</li>" +
+          "<li>建议充分披露跨境流向和接收方信息，并记录数据提供日志。</li>" +
+          "</ul>",
+      },
+      "South Korea": {
+        code: "KR",
+        zhName: "韩国",
+        enName: "South Korea",
+        mapName: "Korea",
+        aliases: ["韩国", "South Korea", "Republic of Korea", "KR"],
+        riskLevel: "高风险",
+        riskScore: 3,
+        riskSummary: "隐私法严格、执法活跃，获 EU 充分性",
+        regulationUpdate: "关键：PIPA 及其实施细则",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">PIPA（个人信息保护法）</span></div>' +
+          "<ul>" +
+          "<li>对向境外提供个人信息有较严格的告知、同意与记录保存要求。</li>" +
+          "<li>对敏感信息和唯一标识信息的处理与出境有更高门槛。</li>" +
+          "<li>与欧盟互认充分性，但在 Cookie、行为广告等方面执法趋严。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">数据转移协议</span><span class="tag tag-soft">数据处理记录</span></div>' +
+          "<ul>" +
+          "<li>对每一次向第三方提供个人信息须记录目的、范围、接收方等信息。</li>" +
+          "<li>建议在跨境项目中加强日志与审计，确保可证明合规。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>无全面本地化义务，但部分领域法规和政府项目可能要求境内存储。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>韩国个人信息保护委员会与通信监管机构对大型平台和跨境广告投放屡有处罚。</li>" +
+          "<li>建议关注对“联合控制者”“受托处理者”界定以及用户同意设计。</li>" +
+          "</ul>",
+      },
+      Singapore: {
+        code: "SG",
+        zhName: "新加坡",
+        enName: "Singapore",
+        mapName: "Singapore",
+        aliases: ["新加坡", "Singapore", "SG"],
+        riskLevel: "低风险",
+        riskScore: 1,
+        riskSummary: "规则清晰，鼓励数据流动，同时强调保障措施",
+        regulationUpdate: "关键：PDPA 及跨境数据转移指南",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">PDPA（个人数据保护法）</span></div>' +
+          "<ul>" +
+          "<li>要求组织在跨境转移时确保接收方提供“可比较的保护水平”。</li>" +
+          "<li>对同意、目的限定、保留期限和安全措施均有明确要求。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">合同保护条款</span><span class="tag tag-soft">认证 / 行业准则</span></div>' +
+          "<ul>" +
+          "<li>常见路径是与境外接收方签署符合 PDPA 要求的传输协议。</li>" +
+          "<li>部分行业可依托认证机制或行业行为准则作为补充保障。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>无普遍本地化强制要求，新加坡定位为区域数据枢纽。</li>" +
+          "<li>但仍关注关键基础设施和政府数据安全，可能有特殊安排。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>PDPC 对数据泄露与访问控制不足案件定期发布执法决定和最佳实践。</li>" +
+          "<li>对合规计划、培训和第三方管理有较为务实的监管口径。</li>" +
+          "</ul>",
+      },
+      Brazil: {
+        code: "BR",
+        zhName: "巴西",
+        enName: "Brazil",
+        mapName: "Brazil",
+        aliases: ["巴西", "Brazil", "BR"],
+        riskLevel: "中风险",
+        riskScore: 2,
+        riskSummary: "LGPD 类似 GDPR，但实践与指引仍在发展中",
+        regulationUpdate: "关键：LGPD 及 ANPD 指南",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">LGPD</span></div>' +
+          "<ul>" +
+          "<li>引入类似 GDPR 的法律基础、数据主体权利和跨境传输规则。</li>" +
+          "<li>跨境传输需要充分性决定、合同条款、认证或全球规范等保障。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">合同条款</span><span class="tag tag-soft">标准条款（草案）</span></div>' +
+          "<ul>" +
+          "<li>目前主要依赖合同和承诺条款，ANPD 逐步制定更细化标准。</li>" +
+          "<li>对高风险处理建议进行 DPIA 式的评估与记录。</li>" +
+          "</ul>",
+        localizationHtml:
+          "<ul>" +
+          "<li>LGPD 通常不强制本地化，但其他行业法可能对数据存储位置做出限制。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>ANPD 开始对大型平台和金融机构进行监督，罚款与整改要求逐渐增多。</li>" +
+          "</ul>",
+      },
+      Russia: {
+        code: "RU",
+        zhName: "俄罗斯",
+        enName: "Russia",
+        mapName: "Russia",
+        aliases: ["俄罗斯", "Russia", "RU", "Russian Federation"],
+        riskLevel: "高风险",
+        riskScore: 3,
+        riskSummary: "数据本地化和对外传输审批要求较高，地缘风险突出",
+        regulationUpdate: "关键：个人数据法及本地化条款",
+        regulationsHtml:
+          '<div><span class="tag tag-strong">Federal Law on Personal Data</span></div>' +
+          "<ul>" +
+          "<li>要求初始收集的个人数据在俄罗斯境内数据库中记录和存储。</li>" +
+          "<li>部分数据跨境传输需向监管机关通知或审批。</li>" +
+          "<li>在当前制裁与地缘政治背景下，合规与运营风险明显上升。</li>" +
+          "</ul>",
+        transferMechanismHtml:
+          '<div><span class="tag tag-soft">监管许可 / 通知</span><span class="tag tag-soft">合同约束</span></div>' +
+          "<ul>" +
+          "<li>需要综合评估俄罗斯与其他法域之间的冲突法与制裁风险。</li>" +
+          "<li>建议非常审慎地设计跨境连接或远程运维方案。</li>" +
+          "</ul>",
+        localizationHtml:
+          '<div><span class="tag tag-local">本地化要求强</span></div>' +
+          "<ul>" +
+          "<li>许多互联网服务被要求在当地部署服务器并本地存储用户数据。</li>" +
+          "</ul>",
+        enforcementHtml:
+          "<ul>" +
+          "<li>监管机关曾对未履行本地化义务的平台处以罚款、限速或封禁措施。</li>" +
+          "<li>国际企业在俄罗斯的业务与系统部署需同时面对合规与制裁双重挑战。</li>" +
+          "</ul>",
+      },
+    };
+
+    // 确保地图上能够匹配到所有需要的国家/地区
+    // （部分名称如 “European Union” 在实际底图中可能有限，示例中仍予以展示）
+
+    var countryMapData = Object.keys(countryConfig).map(function (key) {
+      return {
+        name: countryConfig[key].mapName,
+        value: countryConfig[key].riskScore,
+      };
+    });
+
+    var riskColors = {
+      高风险: "#ef4444",
+      中风险: "#f97316",
+      低风险: "#22c55e",
+    };
+
+    function renderDetailPanel(config) {
+      if (!config) return;
+      document.getElementById("countryName").textContent = config.zhName;
+      document.getElementById("countryNameEn").textContent = config.enName;
+      var riskTag = document.getElementById("riskLevelTag");
+      riskTag.textContent = config.riskLevel;
+      riskTag.style.color = riskColors[config.riskLevel] || "#e5e7eb";
+      riskTag.style.textShadow = "0 0 8px " + (riskColors[config.riskLevel] || "#6b7280");
+      document.getElementById("riskSummary").textContent = " · " + (config.riskSummary || "");
+      document.getElementById("regulationUpdate").textContent = config.regulationUpdate || "";
+      document.getElementById("regulations").innerHTML = config.regulationsHtml || "";
+      document.getElementById("transferMechanism").innerHTML = config.transferMechanismHtml || "";
+      document.getElementById("localization").innerHTML = config.localizationHtml || "";
+      document.getElementById("enforcement").innerHTML = config.enforcementHtml || "";
+    }
+
+    function findConfigByName(name) {
+      if (!name) return null;
+      var lower = name.trim().toLowerCase();
+      var keys = Object.keys(countryConfig);
+      for (var i = 0; i < keys.length; i++) {
+        var cfg = countryConfig[keys[i]];
+        if (!cfg) continue;
+        if (
+          (cfg.mapName && cfg.mapName.toLowerCase() === lower) ||
+          (cfg.zhName && cfg.zhName.toLowerCase() === lower) ||
+          (cfg.enName && cfg.enName.toLowerCase() === lower)
+        ) {
+          return cfg;
         }
+        if (cfg.aliases && cfg.aliases.length) {
+          for (var j = 0; j < cfg.aliases.length; j++) {
+            if (cfg.aliases[j].toLowerCase() === lower) return cfg;
+          }
+        }
+      }
+      // 宽松包含匹配
+      for (var k = 0; k < keys.length; k++) {
+        var c = countryConfig[keys[k]];
+        if (!c) continue;
+        if (
+          (c.zhName && c.zhName.toLowerCase().indexOf(lower) !== -1) ||
+          (c.enName && c.enName.toLowerCase().indexOf(lower) !== -1)
+        ) {
+          return c;
+        }
+      }
+      return null;
+    }
 
-        // 渲染应用
-        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-    </script>
+    function getEChartsInstance() {
+      var dom = document.getElementById("riskMap");
+      if (!dom) return null;
+      return echarts.init(dom, null, { renderer: "canvas" });
+    }
+
+    function buildChartOption(selectedName) {
+      return {
+        backgroundColor: "transparent",
+        tooltip: {
+          trigger: "item",
+          formatter: function (params) {
+            var cfg = findConfigByName(params.name);
+            if (!cfg) return params.name;
+            return (
+              cfg.zhName +
+              " (" +
+              cfg.enName +
+              ")<br/>风险等级：" +
+              cfg.riskLevel +
+              "<br/>点击查看详情"
+            );
+          },
+          backgroundColor: "rgba(15,23,42,0.96)",
+          borderColor: "rgba(148,163,184,0.9)",
+          borderWidth: 1,
+          textStyle: {
+            color: "#e5e7eb",
+            fontSize: 11,
+          },
+        },
+        visualMap: {
+          type: "piecewise",
+          show: true,
+          left: 12,
+          bottom: 10,
+          itemWidth: 12,
+          itemHeight: 10,
+          textStyle: {
+            color: "#9ca3af",
+            fontSize: 10,
+          },
+          pieces: [
+            { value: 3, label: "高风险", color: "#ef4444" },
+            { value: 2, label: "中风险", color: "#f97316" },
+            { value: 1, label: "低风险", color: "#22c55e" },
+          ],
+          backgroundColor: "rgba(15,23,42,0.92)",
+          borderColor: "rgba(30,64,175,0.9)",
+          borderWidth: 1,
+        },
+        geo: {
+          map: "world",
+          roam: true,
+          zoom: 1.15,
+          center: [15, 25],
+          scaleLimit: { min: 0.7, max: 5 },
+          label: {
+            show: false,
+          },
+          itemStyle: {
+            areaColor: "rgba(15,23,42,0.95)",
+            borderColor: "#1f2937",
+            borderWidth: 0.6,
+          },
+          emphasis: {
+            label: { show: false },
+            itemStyle: {
+              areaColor: "rgba(59,130,246,0.8)",
+              borderColor: "#93c5fd",
+              borderWidth: 1.1,
+              shadowBlur: 18,
+              shadowColor: "rgba(37,99,235,0.9)",
+            },
+          },
+        },
+        series: [
+          {
+            name: "合规风险",
+            type: "map",
+            map: "world",
+            geoIndex: 0,
+            data: countryMapData,
+            emphasis: {
+              itemStyle: {
+                areaColor: "rgba(59,130,246,0.8)",
+              },
+            },
+          },
+        ],
+      };
+    }
+
+    function highlightCountryByMapName(chart, mapName) {
+      if (!chart || !mapName) return;
+      chart.dispatchAction({
+        type: "downplay",
+        seriesIndex: 0,
+      });
+      chart.dispatchAction({
+        type: "highlight",
+        seriesIndex: 0,
+        name: mapName,
+      });
+      chart.dispatchAction({
+        type: "showTip",
+        seriesIndex: 0,
+        name: mapName,
+      });
+    }
+
+    function initMap() {
+      var chart = getEChartsInstance();
+      if (!chart) return;
+
+      var option = buildChartOption("China");
+      chart.setOption(option);
+
+      // 默认展示中国
+      var defaultCfg = countryConfig["China"];
+      renderDetailPanel(defaultCfg);
+      highlightCountryByMapName(chart, defaultCfg.mapName);
+
+      chart.on("click", function (params) {
+        var cfg = findConfigByName(params.name);
+        if (!cfg) return;
+        renderDetailPanel(cfg);
+        highlightCountryByMapName(chart, cfg.mapName);
+      });
+
+      window.addEventListener("resize", function () {
+        chart.resize();
+      });
+
+      // 绑定搜索
+      var searchInput = document.getElementById("searchInput");
+      if (searchInput) {
+        searchInput.addEventListener("keyup", function (e) {
+          if (e.key === "Enter") {
+            var value = e.target.value;
+            var cfg = findConfigByName(value);
+            if (cfg) {
+              renderDetailPanel(cfg);
+              highlightCountryByMapName(chart, cfg.mapName);
+            }
+          }
+        });
+      }
+    }
+
+    // 从 CDN 加载 world GeoJSON 并注册到 ECharts，确保地图初始化在数据就绪之后进行
+    function loadWorldMapAndInit() {
+      // 使用 jsDelivr 的 echarts-map 镜像加载 world GeoJSON
+      // 该 CDN 默认带有 Access-Control-Allow-Origin: *，避免本地 file:// 场景的 CORS 问题
+      var worldGeoJsonUrl =
+        "https://cdn.jsdelivr.net/npm/echarts-map@3.0.1/json/world.json";
+
+      fetch(worldGeoJsonUrl)
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("加载 world 地图失败: " + response.status);
+          }
+          return response.json();
+        })
+        .then(function (geoJson) {
+          if (typeof echarts !== "undefined" && geoJson) {
+            echarts.registerMap("world", geoJson);
+          }
+          initMap();
+        })
+        .catch(function (error) {
+          console.error("加载 world GeoJSON 出错:", error);
+        });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", loadWorldMapAndInit);
+    } else {
+      loadWorldMapAndInit();
+    }
+  </script>
 </body>
 </html>
